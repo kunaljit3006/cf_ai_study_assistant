@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en" data-theme="workers">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="StudyBuddy — AI-powered study assistant with persistent memory, flashcards, spaced repetition, and study scheduling. Built on Cloudflare Agents SDK."
+    />
+    <meta name="keywords" content="AI, study assistant, flashcards, spaced repetition, Cloudflare, agents" />
+    <title>StudyBuddy — AI Study Assistant</title>
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+    </style>
+    <script>
+      (() => {
+        const mode = localStorage.getItem("theme") || "light";
+        document.documentElement.setAttribute("data-mode", mode);
+        document.documentElement.style.colorScheme = mode;
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/client.tsx"></script>
+  </body>
+</html>
