@@ -1153,8 +1153,25 @@ function Chat() {
                 {message.parts
                   .filter((part) => part.type === "text")
                   .map((part, i) => {
-                    const text = (part as { type: "text"; text: string }).text;
+                    let text = (part as { type: "text"; text: string }).text;
                     if (!text) return null;
+
+                    // Intercept leaked JSON tool calls to convert them to actual text
+                    try {
+                      const trimmed = text.trim();
+                      if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+                        const parsed = JSON.parse(trimmed);
+                        if (parsed.type === "function" && parsed.name) {
+                          if (parsed.name === "createFlashcard") {
+                            text = `*(Auto-captured Flashcard)*\n\n**Q:** ${parsed.parameters?.question}\n\n**A:** ${parsed.parameters?.answer}`;
+                          } else {
+                            text = `*(Auto-captured ${parsed.name})*\n\n\`\`\`json\n${JSON.stringify(parsed.parameters, null, 2)}\n\`\`\``;
+                          }
+                        }
+                      }
+                    } catch (e) {
+                      // Normal text, do nothing
+                    }
 
                     if (isUser) {
                       return (
