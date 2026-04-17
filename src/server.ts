@@ -38,7 +38,7 @@ function inlineDataUrls(messages: ModelMessage[]): ModelMessage[] {
 
 // ── SQL table init ────────────────────────────────────────────────────
 
-function ensureTables(agent: { sql: any }) {
+function ensureTables(agent: { sql: Function }) {
   agent.sql`
     CREATE TABLE IF NOT EXISTS memories (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -116,36 +116,42 @@ export class ChatAgent extends AIChatAgent<Env> {
   @callable()
   getMemories() {
     ensureTables(this);
-    return this.sql`SELECT key, value, category, created_at FROM memories ORDER BY created_at DESC LIMIT 50`;
+    return this
+      .sql`SELECT key, value, category, created_at FROM memories ORDER BY created_at DESC LIMIT 50`;
   }
 
   /** Expose flashcards to the frontend sidebar */
   @callable()
   getFlashcards() {
     ensureTables(this);
-    return this.sql`SELECT id, question, answer, subject, difficulty, times_reviewed, next_review FROM flashcards ORDER BY next_review ASC LIMIT 50`;
+    return this
+      .sql`SELECT id, question, answer, subject, difficulty, times_reviewed, next_review FROM flashcards ORDER BY next_review ASC LIMIT 50`;
   }
 
   /** Expose study sessions to the frontend */
   @callable()
   getStudySessions() {
     ensureTables(this);
-    return this.sql`SELECT id, subject, duration_minutes, scheduled_at, status, notes FROM study_sessions ORDER BY scheduled_at DESC LIMIT 20`;
+    return this
+      .sql`SELECT id, subject, duration_minutes, scheduled_at, status, notes FROM study_sessions ORDER BY scheduled_at DESC LIMIT 20`;
   }
 
   /** Self-healing fallback for Llama 3 tool execution leaks */
   @callable()
-  async runLeakedTool(name: string, args: any) {
+  async runLeakedTool(name: string, args: Record<string, string | number>) {
     ensureTables(this);
     if (name === "remember") {
-      this.sql`INSERT INTO memories (key, value, category) VALUES (${args.key}, ${args.value}, ${args.category || 'general'}) ON CONFLICT(key) DO UPDATE SET value = excluded.value, category = excluded.category`;
+      this
+        .sql`INSERT INTO memories (key, value, category) VALUES (${args.key}, ${args.value}, ${args.category || "general"}) ON CONFLICT(key) DO UPDATE SET value = excluded.value, category = excluded.category`;
       this.broadcast(JSON.stringify({ type: "memory-updated" }));
     } else if (name === "createFlashcard") {
-      this.sql`INSERT INTO flashcards (question, answer, subject, difficulty) VALUES (${args.question}, ${args.answer}, ${args.subject || 'general'}, ${args.difficulty || 1})`;
+      this
+        .sql`INSERT INTO flashcards (question, answer, subject, difficulty) VALUES (${args.question}, ${args.answer}, ${args.subject || "general"}, ${args.difficulty || 1})`;
       this.broadcast(JSON.stringify({ type: "flashcard-updated" }));
     } else if (name === "createStudySession") {
       const scheduledAt = new Date().toISOString();
-      this.sql`INSERT INTO study_sessions (subject, duration_minutes, scheduled_at, notes) VALUES (${args.subject}, ${args.durationMinutes || 25}, ${scheduledAt}, ${args.notes || null})`;
+      this
+        .sql`INSERT INTO study_sessions (subject, duration_minutes, scheduled_at, notes) VALUES (${args.subject}, ${args.durationMinutes || 25}, ${scheduledAt}, ${args.notes || null})`;
       this.broadcast(JSON.stringify({ type: "session-updated" }));
     }
     return { success: true };
@@ -160,12 +166,16 @@ export class ChatAgent extends AIChatAgent<Env> {
     // Gather current memories for context
     let memoryContext = "";
     try {
-      const mems = this.sql`SELECT key, value, category FROM memories ORDER BY created_at DESC LIMIT 20`;
+      const mems = this
+        .sql`SELECT key, value, category FROM memories ORDER BY created_at DESC LIMIT 20`;
       if (mems.length > 0) {
         memoryContext =
           "\n\nUser's stored memories:\n" +
           mems
-            .map((m: any) => `- [${m.category}] ${m.key}: ${m.value}`)
+            .map(
+              (m: Record<string, string | number | boolean | null>) =>
+                `- [${m.category}] ${m.key}: ${m.value}`
+            )
             .join("\n");
       }
     } catch {
@@ -225,7 +235,8 @@ If the user asks to schedule a study session or set a reminder, use the schedule
           }),
           execute: async ({ key, value, category }) => {
             ensureTables(this);
-            this.sql`INSERT INTO memories (key, value, category) VALUES (${key}, ${value}, ${category}) ON CONFLICT(key) DO UPDATE SET value = excluded.value, category = excluded.category`;
+            this
+              .sql`INSERT INTO memories (key, value, category) VALUES (${key}, ${value}, ${category}) ON CONFLICT(key) DO UPDATE SET value = excluded.value, category = excluded.category`;
             // Broadcast state update so sidebar refreshes
             this.broadcast(JSON.stringify({ type: "memory-updated" }));
             return { success: true, message: `Remembered: ${key} = ${value}` };
@@ -241,7 +252,8 @@ If the user asks to schedule a study session or set a reminder, use the schedule
           execute: async ({ query }) => {
             ensureTables(this);
             const sqry = `%${query}%`;
-            const rows = this.sql`SELECT key, value, category FROM memories WHERE key LIKE ${sqry} OR value LIKE ${sqry} ORDER BY created_at DESC LIMIT 10`;
+            const rows = this
+              .sql`SELECT key, value, category FROM memories WHERE key LIKE ${sqry} OR value LIKE ${sqry} ORDER BY created_at DESC LIMIT 10`;
             if (rows.length === 0) {
               return {
                 found: false,
@@ -286,7 +298,8 @@ If the user asks to schedule a study session or set a reminder, use the schedule
           }),
           execute: async ({ question, answer, subject, difficulty }) => {
             ensureTables(this);
-            this.sql`INSERT INTO flashcards (question, answer, subject, difficulty) VALUES (${question}, ${answer}, ${subject}, ${difficulty})`;
+            this
+              .sql`INSERT INTO flashcards (question, answer, subject, difficulty) VALUES (${question}, ${answer}, ${subject}, ${difficulty})`;
             this.broadcast(JSON.stringify({ type: "flashcard-updated" }));
             return {
               success: true,
@@ -307,10 +320,13 @@ If the user asks to schedule a study session or set a reminder, use the schedule
           }),
           execute: async ({ subject, limit }) => {
             ensureTables(this);
-            const rows = subject === "all"
-                ? this.sql`SELECT id, question, answer, subject, difficulty, times_reviewed FROM flashcards WHERE next_review <= datetime('now') ORDER BY next_review ASC LIMIT ${limit}`
-                : this.sql`SELECT id, question, answer, subject, difficulty, times_reviewed FROM flashcards WHERE subject = ${subject} AND next_review <= datetime('now') ORDER BY next_review ASC LIMIT ${limit}`;
-            
+            const rows =
+              subject === "all"
+                ? this
+                    .sql`SELECT id, question, answer, subject, difficulty, times_reviewed FROM flashcards WHERE next_review <= datetime('now') ORDER BY next_review ASC LIMIT ${limit}`
+                : this
+                    .sql`SELECT id, question, answer, subject, difficulty, times_reviewed FROM flashcards WHERE subject = ${subject} AND next_review <= datetime('now') ORDER BY next_review ASC LIMIT ${limit}`;
+
             if (rows.length === 0) {
               return {
                 message:
@@ -331,9 +347,11 @@ If the user asks to schedule a study session or set a reminder, use the schedule
           execute: async ({ cardId, correct }) => {
             ensureTables(this);
             if (correct) {
-              this.sql`UPDATE flashcards SET times_reviewed = times_reviewed + 1, last_reviewed = datetime('now'), next_review = datetime('now', '+' || CAST(POWER(2, MIN(times_reviewed, 7)) AS INTEGER) || ' days') WHERE id = ${cardId}`;
+              this
+                .sql`UPDATE flashcards SET times_reviewed = times_reviewed + 1, last_reviewed = datetime('now'), next_review = datetime('now', '+' || CAST(POWER(2, MIN(times_reviewed, 7)) AS INTEGER) || ' days') WHERE id = ${cardId}`;
             } else {
-              this.sql`UPDATE flashcards SET times_reviewed = times_reviewed + 1, last_reviewed = datetime('now'), next_review = datetime('now') WHERE id = ${cardId}`;
+              this
+                .sql`UPDATE flashcards SET times_reviewed = times_reviewed + 1, last_reviewed = datetime('now'), next_review = datetime('now') WHERE id = ${cardId}`;
             }
             this.broadcast(JSON.stringify({ type: "flashcard-updated" }));
             return {
@@ -364,7 +382,8 @@ If the user asks to schedule a study session or set a reminder, use the schedule
           execute: async ({ subject, durationMinutes, notes }) => {
             ensureTables(this);
             const scheduledAt = new Date().toISOString();
-            this.sql`INSERT INTO study_sessions (subject, duration_minutes, scheduled_at, notes) VALUES (${subject}, ${durationMinutes}, ${scheduledAt}, ${notes || null})`;
+            this
+              .sql`INSERT INTO study_sessions (subject, duration_minutes, scheduled_at, notes) VALUES (${subject}, ${durationMinutes}, ${scheduledAt}, ${notes || null})`;
             this.broadcast(JSON.stringify({ type: "session-updated" }));
             return {
               success: true,
@@ -379,11 +398,31 @@ If the user asks to schedule a study session or set a reminder, use the schedule
           inputSchema: z.object({}),
           execute: async () => {
             ensureTables(this);
-            const memCount = this.sql`SELECT COUNT(*) as count FROM memories`[0] as any;
-            const cardCount = this.sql`SELECT COUNT(*) as count FROM flashcards`[0] as any;
-            const dueCards = this.sql`SELECT COUNT(*) as count FROM flashcards WHERE next_review <= datetime('now')`[0] as any;
-            const sessionCount = this.sql`SELECT COUNT(*) as count FROM study_sessions`[0] as any;
-            const subjects = this.sql`SELECT DISTINCT subject FROM flashcards`.map((r: any) => r.subject);
+            const memCount = this
+              .sql`SELECT COUNT(*) as count FROM memories`[0] as Record<
+              string,
+              number
+            >;
+            const cardCount = this
+              .sql`SELECT COUNT(*) as count FROM flashcards`[0] as Record<
+              string,
+              number
+            >;
+            const dueCards = this
+              .sql`SELECT COUNT(*) as count FROM flashcards WHERE next_review <= datetime('now')`[0] as Record<
+              string,
+              number
+            >;
+            const sessionCount = this
+              .sql`SELECT COUNT(*) as count FROM study_sessions`[0] as Record<
+              string,
+              number
+            >;
+            const subjects = this
+              .sql`SELECT DISTINCT subject FROM flashcards`.map(
+              (r: Record<string, string | number | boolean | null>) =>
+                r.subject as string
+            );
 
             return {
               totalMemories: memCount.count,
@@ -460,20 +499,27 @@ If the user asks to schedule a study session or set a reminder, use the schedule
         // ── Math tool ─────────────────────────────────────────────
 
         calculateMath: tool({
-          description: "Calculate basic mathematical expressions or sums. Use this tool whenever the user asks for maths like 2 + 3.",
+          description:
+            "Calculate basic mathematical expressions or sums. Use this tool whenever the user asks for maths like 2 + 3.",
           inputSchema: z.object({
-            expression: z.string().describe("A valid mathematical expression (e.g. '2 + 3 * 4')")
+            expression: z
+              .string()
+              .describe("A valid mathematical expression (e.g. '2 + 3 * 4')")
           }),
           execute: async ({ expression }) => {
             try {
               // Note: strictly validating standard mathematical characters to prevent code injection via eval
               if (!/^[0-9+\-*/().\s]*$/.test(expression)) {
-                return { success: false, error: "Only numbers and basic operators (+, -, *, /) are permitted." };
+                return {
+                  success: false,
+                  error:
+                    "Only numbers and basic operators (+, -, *, /) are permitted."
+                };
               }
               // evaluate safely by returning Function block
               const result = new Function(`return ${expression}`)();
               return { success: true, result, expression };
-            } catch (e) {
+            } catch (_e) {
               return { success: false, error: "Invalid math expression." };
             }
           }

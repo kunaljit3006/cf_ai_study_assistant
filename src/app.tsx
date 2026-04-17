@@ -21,7 +21,6 @@ import {
   StopIcon,
   TrashIcon,
   GearIcon,
-  ChatCircleDotsIcon,
   CircleIcon,
   MoonIcon,
   SunIcon,
@@ -43,7 +42,6 @@ import {
   CardsIcon,
   NotePencilIcon,
   GraduationCapIcon,
-  StackIcon,
   ArrowCounterClockwiseIcon
 } from "@phosphor-icons/react";
 
@@ -138,6 +136,7 @@ function StudySidebar({
 }: {
   isOpen: boolean;
   onClose: () => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   agent: any;
 }) {
   const [activeTab, setActiveTab] = useState<
@@ -325,9 +324,11 @@ function StudySidebar({
                       ))}
                     </div>
                   </div>
-                  <Text size="xs" bold className="mb-1">
-                    Q: {card.question}
-                  </Text>
+                  <span className="mb-1">
+                    <Text size="xs" bold>
+                      Q: {card.question}
+                    </Text>
+                  </span>
                   {flippedCards.has(card.id) && (
                     <div className="mt-2 pt-2 border-t border-kumo-line">
                       <Text size="xs" variant="secondary">
@@ -386,9 +387,11 @@ function StudySidebar({
                 </Text>
               </div>
               {sess.notes && (
-                <Text size="xs" variant="secondary" className="mt-1 italic">
-                  {sess.notes}
-                </Text>
+                <span className="mt-1 italic block">
+                  <Text size="xs" variant="secondary">
+                    {sess.notes}
+                  </Text>
+                </span>
               )}
             </Surface>
           ))
@@ -1006,14 +1009,16 @@ function Chat() {
                   className="text-white"
                 />
               </div>
-              <Text variant="heading3" className="mb-2">
-                Welcome to StudyBuddy
-              </Text>
-              <Text variant="secondary" className="mb-8 text-center max-w-md">
-                Your AI-powered study companion. I can create flashcards,
-                remember your study preferences, schedule sessions, and help you
-                learn any subject.
-              </Text>
+              <span className="mb-2 block">
+                <Text variant="heading3">Welcome to StudyBuddy</Text>
+              </span>
+              <span className="mb-8 text-center max-w-md block">
+                <Text variant="secondary">
+                  Your AI-powered study companion. I can create flashcards,
+                  remember your study preferences, schedule sessions, and help
+                  you learn any subject.
+                </Text>
+              </span>
               <div className="flex flex-wrap justify-center gap-2">
                 {[
                   {
@@ -1158,7 +1163,7 @@ function Chat() {
 
                     let hasLeakedTool = false;
                     let leakedName = "";
-                    let leakedArgs: any = {};
+                    let leakedArgs: Record<string, string | number> = {};
 
                     // Intercept leaked JSON tool calls to convert them to actual text
                     try {
@@ -1176,7 +1181,7 @@ function Chat() {
                           }
                         }
                       }
-                    } catch (e) {
+                    } catch (_e) {
                       // Normal text, do nothing
                     }
 
@@ -1201,22 +1206,34 @@ function Chat() {
                           >
                             {text}
                           </Streamdown>
-                          
+
                           {/* Fallback execution button for leaked tools */}
                           {hasLeakedTool && !isStreaming && (
                             <div className="px-3 pb-3">
-                                <Button 
-                                  size="sm" 
-                                  variant="outline" 
-                                  icon={<BrainIcon size={14} className="text-violet-500" />}
-                                  onClick={() => {
-                                      agent.stub.runLeakedTool(leakedName, leakedArgs).then(() => {
-                                         toasts.add({ title: "Success", description: "Tool successfully saved to database!", timeout: 3000 });
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                icon={
+                                  <BrainIcon
+                                    size={14}
+                                    className="text-violet-500"
+                                  />
+                                }
+                                onClick={() => {
+                                  agent.stub
+                                    .runLeakedTool(leakedName, leakedArgs)
+                                    .then(() => {
+                                      toasts.add({
+                                        title: "Success",
+                                        description:
+                                          "Tool successfully saved to database!",
+                                        timeout: 3000
                                       });
-                                  }}
-                                >
-                                  Execute Manually to Database
-                                </Button>
+                                    });
+                                }}
+                              >
+                                Execute Manually to Database
+                              </Button>
                             </div>
                           )}
                         </div>
