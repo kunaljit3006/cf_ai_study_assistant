@@ -5,6 +5,8 @@
 [![Built with Cloudflare Agents](https://img.shields.io/badge/Built%20with-Cloudflare%20Agents-F38020?style=for-the-badge&logo=cloudflare&logoColor=white)](https://developers.cloudflare.com/agents/)
 [![Powered by Workers AI](https://img.shields.io/badge/Powered%20by-Workers%20AI-7C3AED?style=for-the-badge&logo=cloudflare&logoColor=white)](https://developers.cloudflare.com/workers-ai/)
 
+**🟢 Live Deployment:** [https://cf-ai-study-assistant.kunaljitk.workers.dev](https://cf-ai-study-assistant.kunaljitk.workers.dev)
+
 ---
 
 ## ✨ Features
