@@ -8,7 +8,7 @@ import {
   stepCountIs,
   streamText,
   tool,
-  type ModelMessage,
+  type ModelMessage
 } from "ai";
 import { z } from "zod";
 
@@ -31,7 +31,7 @@ function inlineDataUrls(messages: ModelMessage[]): ModelMessage[] {
         if (!match) return part;
         const bytes = Uint8Array.from(atob(match[2]), (c) => c.charCodeAt(0));
         return { ...part, data: bytes, mediaType: match[1] };
-      }),
+      })
     };
   });
 }
@@ -89,14 +89,14 @@ export class ChatAgent extends AIChatAgent<Env> {
         if (result.authSuccess) {
           return new Response("<script>window.close();</script>", {
             headers: { "content-type": "text/html" },
-            status: 200,
+            status: 200
           });
         }
         return new Response(
           `Authentication Failed: ${result.authError || "Unknown error"}`,
           { headers: { "content-type": "text/plain" }, status: 400 }
         );
-      },
+      }
     });
   }
 
@@ -117,7 +117,9 @@ export class ChatAgent extends AIChatAgent<Env> {
   getMemories() {
     ensureTables(this.sql);
     const rows = this.sql
-      .exec("SELECT key, value, category, created_at FROM memories ORDER BY created_at DESC LIMIT 50")
+      .exec(
+        "SELECT key, value, category, created_at FROM memories ORDER BY created_at DESC LIMIT 50"
+      )
       .toArray();
     return rows;
   }
@@ -127,7 +129,9 @@ export class ChatAgent extends AIChatAgent<Env> {
   getFlashcards() {
     ensureTables(this.sql);
     const rows = this.sql
-      .exec("SELECT id, question, answer, subject, difficulty, times_reviewed, next_review FROM flashcards ORDER BY next_review ASC LIMIT 50")
+      .exec(
+        "SELECT id, question, answer, subject, difficulty, times_reviewed, next_review FROM flashcards ORDER BY next_review ASC LIMIT 50"
+      )
       .toArray();
     return rows;
   }
@@ -137,7 +141,9 @@ export class ChatAgent extends AIChatAgent<Env> {
   getStudySessions() {
     ensureTables(this.sql);
     const rows = this.sql
-      .exec("SELECT id, subject, duration_minutes, scheduled_at, status, notes FROM study_sessions ORDER BY scheduled_at DESC LIMIT 20")
+      .exec(
+        "SELECT id, subject, duration_minutes, scheduled_at, status, notes FROM study_sessions ORDER BY scheduled_at DESC LIMIT 20"
+      )
       .toArray();
     return rows;
   }
@@ -152,17 +158,24 @@ export class ChatAgent extends AIChatAgent<Env> {
     let memoryContext = "";
     try {
       const mems = this.sql
-        .exec("SELECT key, value, category FROM memories ORDER BY created_at DESC LIMIT 20")
+        .exec(
+          "SELECT key, value, category FROM memories ORDER BY created_at DESC LIMIT 20"
+        )
         .toArray();
       if (mems.length > 0) {
-        memoryContext = "\n\nUser's stored memories:\n" +
-          mems.map((m: any) => `- [${m.category}] ${m.key}: ${m.value}`).join("\n");
+        memoryContext =
+          "\n\nUser's stored memories:\n" +
+          mems
+            .map((m: any) => `- [${m.category}] ${m.key}: ${m.value}`)
+            .join("\n");
       }
-    } catch { /* tables may not exist yet */ }
+    } catch {
+      /* tables may not exist yet */
+    }
 
     const result = streamText({
       model: workersai("@cf/meta/llama-3.3-70b-instruct-fp8-fast", {
-        sessionAffinity: this.sessionAffinity,
+        sessionAffinity: this.sessionAffinity
       }),
       system: `You are StudyBuddy, an intelligent AI study assistant. You help students learn effectively by:
 
@@ -182,7 +195,7 @@ ${getSchedulePrompt({ date: new Date() })}
 If the user asks to schedule a study session or set a reminder, use the scheduleTask tool.`,
       messages: pruneMessages({
         messages: inlineDataUrls(await convertToModelMessages(this.messages)),
-        toolCalls: "before-last-2-messages",
+        toolCalls: "before-last-2-messages"
       }),
       tools: {
         // MCP tools from connected servers
@@ -194,12 +207,16 @@ If the user asks to schedule a study session or set a reminder, use the schedule
           description:
             "Store an important fact, preference, or piece of information about the student. Use this to remember things like their name, subjects they're studying, learning goals, etc.",
           inputSchema: z.object({
-            key: z.string().describe("Short label for the memory (e.g. 'name', 'major', 'goal')"),
+            key: z
+              .string()
+              .describe(
+                "Short label for the memory (e.g. 'name', 'major', 'goal')"
+              ),
             value: z.string().describe("The information to remember"),
             category: z
               .enum(["personal", "academic", "preference", "general"])
               .describe("Category of the memory")
-              .default("general"),
+              .default("general")
           }),
           execute: async ({ key, value, category }) => {
             ensureTables(this.sql);
@@ -212,14 +229,14 @@ If the user asks to schedule a study session or set a reminder, use the schedule
             // Broadcast state update so sidebar refreshes
             this.broadcast(JSON.stringify({ type: "memory-updated" }));
             return { success: true, message: `Remembered: ${key} = ${value}` };
-          },
+          }
         }),
 
         recall: tool({
           description:
             "Search stored memories about the student. Use this to recall things you've previously remembered.",
           inputSchema: z.object({
-            query: z.string().describe("Search term to look for in memories"),
+            query: z.string().describe("Search term to look for in memories")
           }),
           execute: async ({ query }) => {
             ensureTables(this.sql);
@@ -231,23 +248,26 @@ If the user asks to schedule a study session or set a reminder, use the schedule
               )
               .toArray();
             if (rows.length === 0) {
-              return { found: false, message: "No memories found matching that query." };
+              return {
+                found: false,
+                message: "No memories found matching that query."
+              };
             }
             return { found: true, memories: rows };
-          },
+          }
         }),
 
         forget: tool({
           description: "Remove a specific memory by its key.",
           inputSchema: z.object({
-            key: z.string().describe("The key of the memory to forget"),
+            key: z.string().describe("The key of the memory to forget")
           }),
           execute: async ({ key }) => {
             ensureTables(this.sql);
             this.sql.exec("DELETE FROM memories WHERE key = ?", key);
             this.broadcast(JSON.stringify({ type: "memory-updated" }));
             return { success: true, message: `Forgot: ${key}` };
-          },
+          }
         }),
 
         // ── Flashcard tools ───────────────────────────────────────
@@ -258,13 +278,16 @@ If the user asks to schedule a study session or set a reminder, use the schedule
           inputSchema: z.object({
             question: z.string().describe("The question side of the flashcard"),
             answer: z.string().describe("The answer side of the flashcard"),
-            subject: z.string().describe("The subject/topic (e.g. 'Biology', 'Calculus')").default("general"),
+            subject: z
+              .string()
+              .describe("The subject/topic (e.g. 'Biology', 'Calculus')")
+              .default("general"),
             difficulty: z
               .number()
               .min(1)
               .max(5)
               .describe("Difficulty 1-5")
-              .default(1),
+              .default(1)
           }),
           execute: async ({ question, answer, subject, difficulty }) => {
             ensureTables(this.sql);
@@ -278,9 +301,9 @@ If the user asks to schedule a study session or set a reminder, use the schedule
             this.broadcast(JSON.stringify({ type: "flashcard-updated" }));
             return {
               success: true,
-              message: `Flashcard created for ${subject}: "${question}"`,
+              message: `Flashcard created for ${subject}: "${question}"`
             };
-          },
+          }
         }),
 
         reviewFlashcards: tool({
@@ -291,7 +314,7 @@ If the user asks to schedule a study session or set a reminder, use the schedule
               .string()
               .describe("Filter by subject, or 'all' for all subjects")
               .default("all"),
-            limit: z.number().describe("Number of cards to review").default(5),
+            limit: z.number().describe("Number of cards to review").default(5)
           }),
           execute: async ({ subject, limit }) => {
             ensureTables(this.sql);
@@ -305,11 +328,12 @@ If the user asks to schedule a study session or set a reminder, use the schedule
                 : this.sql.exec(query, subject, limit).toArray();
             if (rows.length === 0) {
               return {
-                message: "No flashcards due for review! Great job staying on top of your studies. 🎉",
+                message:
+                  "No flashcards due for review! Great job staying on top of your studies. 🎉"
               };
             }
             return { cards: rows, count: rows.length };
-          },
+          }
         }),
 
         markFlashcardReviewed: tool({
@@ -317,12 +341,14 @@ If the user asks to schedule a study session or set a reminder, use the schedule
             "Mark a flashcard as reviewed after the student has practiced it. Adjusts the next review time based on difficulty.",
           inputSchema: z.object({
             cardId: z.number().describe("The flashcard ID"),
-            correct: z.boolean().describe("Whether the student got it right"),
+            correct: z.boolean().describe("Whether the student got it right")
           }),
           execute: async ({ cardId, correct }) => {
             ensureTables(this.sql);
             // Simple spaced repetition: correct → longer delay, wrong → sooner
-            const delayDays = correct ? "CAST(POWER(2, MIN(times_reviewed, 7)) AS INTEGER)" : "0";
+            const delayDays = correct
+              ? "CAST(POWER(2, MIN(times_reviewed, 7)) AS INTEGER)"
+              : "0";
             this.sql.exec(
               `UPDATE flashcards 
                SET times_reviewed = times_reviewed + 1,
@@ -336,9 +362,9 @@ If the user asks to schedule a study session or set a reminder, use the schedule
               success: true,
               message: correct
                 ? "Nice work! Card will reappear later. 🌟"
-                : "No worries — we'll review this one again soon! 💪",
+                : "No worries — we'll review this one again soon! 💪"
             };
-          },
+          }
         }),
 
         // ── Study session tools ───────────────────────────────────
@@ -352,7 +378,10 @@ If the user asks to schedule a study session or set a reminder, use the schedule
               .number()
               .describe("Duration in minutes (default 25 for Pomodoro)")
               .default(25),
-            notes: z.string().describe("Any notes or focus areas for this session").optional(),
+            notes: z
+              .string()
+              .describe("Any notes or focus areas for this session")
+              .optional()
           }),
           execute: async ({ subject, durationMinutes, notes }) => {
             ensureTables(this.sql);
@@ -367,13 +396,14 @@ If the user asks to schedule a study session or set a reminder, use the schedule
             this.broadcast(JSON.stringify({ type: "session-updated" }));
             return {
               success: true,
-              message: `Study session created: ${subject} for ${durationMinutes} minutes`,
+              message: `Study session created: ${subject} for ${durationMinutes} minutes`
             };
-          },
+          }
         }),
 
         getStudyStats: tool({
-          description: "Get overview statistics about the student's study progress.",
+          description:
+            "Get overview statistics about the student's study progress.",
           inputSchema: z.object({}),
           execute: async () => {
             ensureTables(this.sql);
@@ -401,9 +431,9 @@ If the user asks to schedule a study session or set a reminder, use the schedule
               totalFlashcards: cardCount.count,
               flashcardsDueForReview: dueCards.count,
               totalStudySessions: sessionCount.count,
-              subjects,
+              subjects
             };
-          },
+          }
         }),
 
         // ── Scheduling ────────────────────────────────────────────
@@ -427,13 +457,13 @@ If the user asks to schedule a study session or set a reminder, use the schedule
             if (!input) return "Invalid schedule type";
             try {
               this.schedule(input, "executeTask", description, {
-                idempotent: true,
+                idempotent: true
               });
               return `Study reminder scheduled: "${description}" (${when.type}: ${input})`;
             } catch (error) {
               return `Error scheduling: ${error}`;
             }
-          },
+          }
         }),
 
         getScheduledTasks: tool({
@@ -442,13 +472,13 @@ If the user asks to schedule a study session or set a reminder, use the schedule
           execute: async () => {
             const tasks = this.getSchedules();
             return tasks.length > 0 ? tasks : "No scheduled reminders found.";
-          },
+          }
         }),
 
         cancelScheduledTask: tool({
           description: "Cancel a scheduled study reminder by its ID.",
           inputSchema: z.object({
-            taskId: z.string().describe("The ID of the task to cancel"),
+            taskId: z.string().describe("The ID of the task to cancel")
           }),
           execute: async ({ taskId }) => {
             try {
@@ -457,7 +487,7 @@ If the user asks to schedule a study session or set a reminder, use the schedule
             } catch (error) {
               return `Error cancelling: ${error}`;
             }
-          },
+          }
         }),
 
         // ── Client-side tool ──────────────────────────────────────
@@ -465,11 +495,11 @@ If the user asks to schedule a study session or set a reminder, use the schedule
         getUserTimezone: tool({
           description:
             "Get the user's timezone from their browser. Use this when you need to know the user's local time.",
-          inputSchema: z.object({}),
-        }),
+          inputSchema: z.object({})
+        })
       },
       stopWhen: stepCountIs(5),
-      abortSignal: options?.abortSignal,
+      abortSignal: options?.abortSignal
     });
 
     return result.toUIMessageStreamResponse();
@@ -482,7 +512,7 @@ If the user asks to schedule a study session or set a reminder, use the schedule
       JSON.stringify({
         type: "scheduled-task",
         description,
-        timestamp: new Date().toISOString(),
+        timestamp: new Date().toISOString()
       })
     );
   }
@@ -494,5 +524,5 @@ export default {
       (await routeAgentRequest(request, env)) ||
       new Response("Not found", { status: 404 })
     );
-  },
+  }
 } satisfies ExportedHandler<Env>;

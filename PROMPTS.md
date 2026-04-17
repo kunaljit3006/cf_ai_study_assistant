@@ -7,6 +7,7 @@ This document records all AI prompts used during the development of the StudyBud
 ## 1. Project Planning & Architecture
 
 ### Prompt 1.1 — Initial Project Plan
+
 ```
 Build Agents on Cloudflare
 
@@ -26,6 +27,7 @@ Make a plan for building an AI-powered study assistant with memory, flashcards, 
 ## 2. Server-Side Agent Development
 
 ### Prompt 2.1 — Study Assistant Agent Design
+
 ```
 Transform the starter agent into a StudyAssistant agent (extending AIChatAgent) with:
 - Memory: Implement persistent storage using the built-in SQLite database to store user preferences and "known facts"
@@ -37,6 +39,7 @@ Transform the starter agent into a StudyAssistant agent (extending AIChatAgent) 
 **Purpose**: Design the core agent logic with study-specific tools, SQL schema, and spaced repetition algorithm.
 
 ### Prompt 2.2 — System Prompt for StudyBuddy
+
 The following system prompt is used at runtime to instruct the LLM:
 
 ```
@@ -60,6 +63,7 @@ Always check your memory for relevant user context before answering.
 ## 3. Frontend UI Development
 
 ### Prompt 3.1 — Premium Study UI
+
 ```
 Create a premium, responsive chat interface for a study assistant with:
 - Study assistant branding with violet/indigo color theme
@@ -77,6 +81,7 @@ Create a premium, responsive chat interface for a study assistant with:
 ## 4. Documentation
 
 ### Prompt 4.1 — README Generation
+
 ```
 Write a comprehensive README.md with:
 - Architecture diagram (ASCII)
@@ -93,17 +98,17 @@ Write a comprehensive README.md with:
 
 ## 5. Tools & Technologies Used
 
-| Tool | Version | Purpose |
-|------|---------|---------|
-| Cloudflare Agents SDK | ^0.11.1 | Agent framework with Durable Objects |
-| @cloudflare/ai-chat | ^0.4.4 | AIChatAgent base class |
-| Workers AI | — | LLM inference (Llama 3.3 70B) |
-| Vercel AI SDK | ^6.0.164 | Streaming, tool calling, message handling |
-| React | ^19.2.5 | Frontend UI framework |
-| Vite | ^8.0.8 | Build tool and dev server |
-| TailwindCSS | ^4.2.2 | Utility-first CSS framework |
-| Zod | ^4.3.6 | Tool input schema validation |
-| @cloudflare/kumo | ^1.18.0 | Cloudflare design system components |
+| Tool                  | Version  | Purpose                                   |
+| --------------------- | -------- | ----------------------------------------- |
+| Cloudflare Agents SDK | ^0.11.1  | Agent framework with Durable Objects      |
+| @cloudflare/ai-chat   | ^0.4.4   | AIChatAgent base class                    |
+| Workers AI            | —        | LLM inference (Llama 3.3 70B)             |
+| Vercel AI SDK         | ^6.0.164 | Streaming, tool calling, message handling |
+| React                 | ^19.2.5  | Frontend UI framework                     |
+| Vite                  | ^8.0.8   | Build tool and dev server                 |
+| TailwindCSS           | ^4.2.2   | Utility-first CSS framework               |
+| Zod                   | ^4.3.6   | Tool input schema validation              |
+| @cloudflare/kumo      | ^1.18.0  | Cloudflare design system components       |
 
 ---
 

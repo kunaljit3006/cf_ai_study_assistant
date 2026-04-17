@@ -11,7 +11,7 @@ import {
   InputArea,
   Surface,
   Switch,
-  Text,
+  Text
 } from "@cloudflare/kumo";
 import { Toasty, useKumoToastManager } from "@cloudflare/kumo/components/toast";
 import { Streamdown } from "streamdown";
@@ -44,7 +44,7 @@ import {
   NotePencilIcon,
   GraduationCapIcon,
   StackIcon,
-  ArrowCounterClockwiseIcon,
+  ArrowCounterClockwiseIcon
 } from "@phosphor-icons/react";
 
 // ── Attachment helpers ────────────────────────────────────────────────
@@ -61,7 +61,7 @@ function createAttachment(file: File): Attachment {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     file,
     preview: URL.createObjectURL(file),
-    mediaType: file.type || "application/octet-stream",
+    mediaType: file.type || "application/octet-stream"
   };
 }
 
@@ -134,13 +134,15 @@ function ThemeToggle() {
 function StudySidebar({
   isOpen,
   onClose,
-  agent,
+  agent
 }: {
   isOpen: boolean;
   onClose: () => void;
   agent: any;
 }) {
-  const [activeTab, setActiveTab] = useState<"memory" | "flashcards" | "sessions">("memory");
+  const [activeTab, setActiveTab] = useState<
+    "memory" | "flashcards" | "sessions"
+  >("memory");
   const [memories, setMemories] = useState<Memory[]>([]);
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [sessions, setSessions] = useState<StudySession[]>([]);
@@ -154,7 +156,7 @@ function StudySidebar({
       const [mems, cards, sess] = await Promise.all([
         agent.stub.getMemories(),
         agent.stub.getFlashcards(),
-        agent.stub.getStudySessions(),
+        agent.stub.getStudySessions()
       ]);
       setMemories(mems || []);
       setFlashcards(cards || []);
@@ -213,11 +215,28 @@ function StudySidebar({
 
       {/* Tabs */}
       <div className="flex border-b border-kumo-line">
-        {([
-          { key: "memory", label: "Memory", icon: <BrainIcon size={14} />, count: memories.length },
-          { key: "flashcards", label: "Cards", icon: <CardsIcon size={14} />, count: flashcards.length },
-          { key: "sessions", label: "Sessions", icon: <ClockIcon size={14} />, count: sessions.length },
-        ] as const).map((tab) => (
+        {(
+          [
+            {
+              key: "memory",
+              label: "Memory",
+              icon: <BrainIcon size={14} />,
+              count: memories.length
+            },
+            {
+              key: "flashcards",
+              label: "Cards",
+              icon: <CardsIcon size={14} />,
+              count: flashcards.length
+            },
+            {
+              key: "sessions",
+              label: "Sessions",
+              icon: <ClockIcon size={14} />,
+              count: sessions.length
+            }
+          ] as const
+        ).map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
@@ -300,7 +319,9 @@ function StudySidebar({
                     <Badge variant="secondary">{card.subject}</Badge>
                     <div className="flex items-center gap-1">
                       {Array.from({ length: card.difficulty }).map((_, i) => (
-                        <span key={i} className="text-amber-400 text-xs">★</span>
+                        <span key={i} className="text-amber-400 text-xs">
+                          ★
+                        </span>
                       ))}
                     </div>
                   </div>
@@ -319,7 +340,9 @@ function StudySidebar({
                       Reviewed {card.times_reviewed}x
                     </Text>
                     <Text size="xs" variant="secondary">
-                      {flippedCards.has(card.id) ? "Click to hide" : "Click to reveal"}
+                      {flippedCards.has(card.id)
+                        ? "Click to hide"
+                        : "Click to reveal"}
                     </Text>
                   </div>
                 </div>
@@ -347,7 +370,9 @@ function StudySidebar({
                   {sess.subject}
                 </Text>
                 <Badge
-                  variant={sess.status === "completed" ? "primary" : "secondary"}
+                  variant={
+                    sess.status === "completed" ? "primary" : "secondary"
+                  }
                 >
                   {sess.status}
                 </Badge>
@@ -377,7 +402,7 @@ function StudySidebar({
 
 function ToolPartView({
   part,
-  addToolApprovalResponse,
+  addToolApprovalResponse
 }: {
   part: UIMessage["parts"][number];
   addToolApprovalResponse: (response: {
@@ -390,7 +415,11 @@ function ToolPartView({
 
   // Map tool names to study-specific icons
   const getToolIcon = (name: string) => {
-    if (name.includes("remember") || name.includes("recall") || name.includes("forget"))
+    if (
+      name.includes("remember") ||
+      name.includes("recall") ||
+      name.includes("forget")
+    )
       return <BrainIcon size={14} className="text-violet-400" />;
     if (name.includes("flashcard") || name.includes("Flashcard"))
       return <CardsIcon size={14} className="text-amber-400" />;
@@ -528,7 +557,7 @@ function Chat() {
     prompts: [],
     resources: [],
     servers: {},
-    tools: [],
+    tools: []
   });
   const [showMcpPanel, setShowMcpPanel] = useState(false);
   const [mcpName, setMcpName] = useState("");
@@ -555,7 +584,7 @@ function Chat() {
             toasts.add({
               title: "📚 Study Reminder",
               description: data.description,
-              timeout: 0,
+              timeout: 0
             });
           }
           // Refresh sidebar on state changes
@@ -571,7 +600,7 @@ function Chat() {
         }
       },
       [toasts]
-    ),
+    )
   });
 
   // Close MCP panel when clicking outside
@@ -620,7 +649,7 @@ function Chat() {
     clearHistory,
     addToolApprovalResponse,
     stop,
-    status,
+    status
   } = useAgentChat({
     agent,
     onToolCall: async (event) => {
@@ -632,11 +661,11 @@ function Chat() {
           toolCallId: event.toolCall.toolCallId,
           output: {
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-            localTime: new Date().toLocaleTimeString(),
-          },
+            localTime: new Date().toLocaleTimeString()
+          }
         });
       }
-    },
+    }
   });
 
   const isStreaming = status === "streaming" || status === "submitted";
@@ -971,22 +1000,46 @@ function Chat() {
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center py-16">
               <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center mb-6 shadow-lg shadow-violet-500/25">
-                <GraduationCapIcon size={40} weight="bold" className="text-white" />
+                <GraduationCapIcon
+                  size={40}
+                  weight="bold"
+                  className="text-white"
+                />
               </div>
               <Text variant="heading3" className="mb-2">
                 Welcome to StudyBuddy
               </Text>
               <Text variant="secondary" className="mb-8 text-center max-w-md">
-                Your AI-powered study companion. I can create flashcards, remember your study preferences, schedule sessions, and help you learn any subject.
+                Your AI-powered study companion. I can create flashcards,
+                remember your study preferences, schedule sessions, and help you
+                learn any subject.
               </Text>
               <div className="flex flex-wrap justify-center gap-2">
                 {[
-                  { icon: <BrainIcon size={14} />, text: "Remember my name is..." },
-                  { icon: <CardsIcon size={14} />, text: "Create flashcards for photosynthesis" },
-                  { icon: <BookOpenIcon size={14} />, text: "Explain quantum entanglement simply" },
-                  { icon: <ClockIcon size={14} />, text: "Remind me in 30 min to review notes" },
-                  { icon: <LightbulbIcon size={14} />, text: "Quiz me on my flashcards" },
-                  { icon: <NotePencilIcon size={14} />, text: "Summarize the water cycle" },
+                  {
+                    icon: <BrainIcon size={14} />,
+                    text: "Remember my name is..."
+                  },
+                  {
+                    icon: <CardsIcon size={14} />,
+                    text: "Create flashcards for photosynthesis"
+                  },
+                  {
+                    icon: <BookOpenIcon size={14} />,
+                    text: "Explain quantum entanglement simply"
+                  },
+                  {
+                    icon: <ClockIcon size={14} />,
+                    text: "Remind me in 30 min to review notes"
+                  },
+                  {
+                    icon: <LightbulbIcon size={14} />,
+                    text: "Quiz me on my flashcards"
+                  },
+                  {
+                    icon: <NotePencilIcon size={14} />,
+                    text: "Summarize the water cycle"
+                  }
                 ].map((prompt) => (
                   <Button
                     key={prompt.text}
@@ -997,7 +1050,7 @@ function Chat() {
                     onClick={() => {
                       sendMessage({
                         role: "user",
-                        parts: [{ type: "text", text: prompt.text }],
+                        parts: [{ type: "text", text: prompt.text }]
                       });
                     }}
                   >
@@ -1263,7 +1316,11 @@ export default function App() {
           <div className="flex items-center justify-center h-screen text-kumo-inactive">
             <div className="flex flex-col items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center animate-pulse">
-                <GraduationCapIcon size={24} weight="bold" className="text-white" />
+                <GraduationCapIcon
+                  size={24}
+                  weight="bold"
+                  className="text-white"
+                />
               </div>
               <Text variant="secondary">Loading StudyBuddy...</Text>
             </div>

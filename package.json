@@ -7,9 +7,9 @@
     "agents",
     "ai",
     "cloudflare",
-    "study",
     "flashcards",
-    "memory"
+    "memory",
+    "study"
   ],
   "license": "MIT",
   "type": "module",

@@ -10,21 +10,27 @@
 ## ✨ Features
 
 ### 🧠 Persistent Memory
+
 StudyBuddy remembers everything about you — your name, subjects, learning goals, and preferences. State is stored in the Durable Object's built-in SQLite database and survives restarts, deploys, and hibernation.
 
 ### 🃏 Flashcards & Spaced Repetition
+
 Create flashcards on any topic and review them using a built-in spaced repetition algorithm. Cards you get right appear less frequently; cards you miss come back sooner.
 
 ### ⏰ Study Scheduling & Reminders
+
 Schedule study sessions and reminders using natural language. The agent uses Cloudflare's scheduling API to wake itself up at the right time — no cron jobs or external schedulers needed.
 
 ### 💬 Streaming AI Chat
+
 Real-time streaming responses powered by **Llama 3.3 70B** via Workers AI. Messages are automatically persisted and streams resume on disconnect.
 
 ### 🔌 MCP Integration
+
 Connect external tools and services via the Model Context Protocol (MCP). Add MCP servers directly from the UI.
 
 ### 🖼️ Image Understanding
+
 Drag-and-drop or paste images into the chat. StudyBuddy can analyze diagrams, handwritten notes, and textbook images.
 
 ---
@@ -61,20 +67,21 @@ Drag-and-drop or paste images into the chat. StudyBuddy can analyze diagrams, ha
 
 ### Key Components
 
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| **Agent** | Cloudflare Durable Object | Stateful AI agent with SQL storage, WebSocket, scheduling |
-| **LLM** | Workers AI (Llama 3.3 70B) | Natural language understanding and generation |
-| **Frontend** | React + Vite + TailwindCSS | Premium chat UI with study dashboard sidebar |
-| **State** | Durable Object SQLite | Persistent storage for memories, flashcards, sessions |
-| **Scheduling** | Durable Object Alarms | Autonomous task execution and reminders |
-| **Communication** | WebSocket | Real-time bidirectional streaming |
+| Component         | Technology                 | Purpose                                                   |
+| ----------------- | -------------------------- | --------------------------------------------------------- |
+| **Agent**         | Cloudflare Durable Object  | Stateful AI agent with SQL storage, WebSocket, scheduling |
+| **LLM**           | Workers AI (Llama 3.3 70B) | Natural language understanding and generation             |
+| **Frontend**      | React + Vite + TailwindCSS | Premium chat UI with study dashboard sidebar              |
+| **State**         | Durable Object SQLite      | Persistent storage for memories, flashcards, sessions     |
+| **Scheduling**    | Durable Object Alarms      | Autonomous task execution and reminders                   |
+| **Communication** | WebSocket                  | Real-time bidirectional streaming                         |
 
 ---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 - [Node.js](https://nodejs.org/) v18+
 - [npm](https://www.npmjs.com/) v9+
 - A [Cloudflare account](https://dash.cloudflare.com/sign-up) (free tier works)
@@ -110,6 +117,7 @@ npm run deploy
 ## 🎯 Usage Examples
 
 ### Memory
+
 ```
 "Remember my name is Alex and I'm studying Computer Science"
 "What do you know about me?"
@@ -117,6 +125,7 @@ npm run deploy
 ```
 
 ### Flashcards
+
 ```
 "Create flashcards for the water cycle"
 "Make 5 flashcards about photosynthesis"
@@ -125,6 +134,7 @@ npm run deploy
 ```
 
 ### Scheduling
+
 ```
 "Remind me in 30 minutes to review my flashcards"
 "Schedule a study session for tomorrow at 3pm"
@@ -132,6 +142,7 @@ npm run deploy
 ```
 
 ### Learning
+
 ```
 "Explain quantum entanglement in simple terms"
 "Summarize Chapter 3 of my textbook" (with image attachment)
@@ -142,20 +153,20 @@ npm run deploy
 
 ## 🛠️ Tools Reference
 
-| Tool | Type | Description |
-|------|------|-------------|
-| `remember` | Server | Store facts about the student in SQL |
-| `recall` | Server | Search stored memories |
-| `forget` | Server | Remove a specific memory |
-| `createFlashcard` | Server | Create a Q&A flashcard |
-| `reviewFlashcards` | Server | Get cards due for spaced repetition review |
-| `markFlashcardReviewed` | Server | Update a card's review status |
-| `createStudySession` | Server | Plan a study session |
-| `getStudyStats` | Server | Get learning progress statistics |
-| `scheduleTask` | Server | Schedule a reminder/task |
-| `getScheduledTasks` | Server | List all scheduled reminders |
-| `cancelScheduledTask` | Server | Cancel a scheduled reminder |
-| `getUserTimezone` | Client | Get the user's browser timezone |
+| Tool                    | Type   | Description                                |
+| ----------------------- | ------ | ------------------------------------------ |
+| `remember`              | Server | Store facts about the student in SQL       |
+| `recall`                | Server | Search stored memories                     |
+| `forget`                | Server | Remove a specific memory                   |
+| `createFlashcard`       | Server | Create a Q&A flashcard                     |
+| `reviewFlashcards`      | Server | Get cards due for spaced repetition review |
+| `markFlashcardReviewed` | Server | Update a card's review status              |
+| `createStudySession`    | Server | Plan a study session                       |
+| `getStudyStats`         | Server | Get learning progress statistics           |
+| `scheduleTask`          | Server | Schedule a reminder/task                   |
+| `getScheduledTasks`     | Server | List all scheduled reminders               |
+| `cancelScheduledTask`   | Server | Cancel a scheduled reminder                |
+| `getUserTimezone`       | Client | Get the user's browser timezone            |
 
 ---
 
@@ -196,6 +207,7 @@ const model = anthropic("claude-sonnet-4-20250514");
 ```
 
 Add the corresponding API key as a secret:
+
 ```bash
 npx wrangler secret put OPENAI_API_KEY
 ```
