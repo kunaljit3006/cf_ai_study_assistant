@@ -133,6 +133,24 @@ export class ChatAgent extends AIChatAgent<Env> {
     return this.sql`SELECT id, subject, duration_minutes, scheduled_at, status, notes FROM study_sessions ORDER BY scheduled_at DESC LIMIT 20`;
   }
 
+  /** Self-healing fallback for Llama 3 tool execution leaks */
+  @callable()
+  async runLeakedTool(name: string, args: any) {
+    ensureTables(this);
+    if (name === "remember") {
+      this.sql`INSERT INTO memories (key, value, category) VALUES (${args.key}, ${args.value}, ${args.category || 'general'}) ON CONFLICT(key) DO UPDATE SET value = excluded.value, category = excluded.category`;
+      this.broadcast(JSON.stringify({ type: "memory-updated" }));
+    } else if (name === "createFlashcard") {
+      this.sql`INSERT INTO flashcards (question, answer, subject, difficulty) VALUES (${args.question}, ${args.answer}, ${args.subject || 'general'}, ${args.difficulty || 1})`;
+      this.broadcast(JSON.stringify({ type: "flashcard-updated" }));
+    } else if (name === "createStudySession") {
+      const scheduledAt = new Date().toISOString();
+      this.sql`INSERT INTO study_sessions (subject, duration_minutes, scheduled_at, notes) VALUES (${args.subject}, ${args.durationMinutes || 25}, ${scheduledAt}, ${args.notes || null})`;
+      this.broadcast(JSON.stringify({ type: "session-updated" }));
+    }
+    return { success: true };
+  }
+
   // ── Chat handler ──────────────────────────────────────────────────
 
   async onChatMessage(_onFinish: unknown, options?: OnChatMessageOptions) {

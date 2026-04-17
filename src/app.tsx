@@ -1156,16 +1156,23 @@ function Chat() {
                     let text = (part as { type: "text"; text: string }).text;
                     if (!text) return null;
 
+                    let hasLeakedTool = false;
+                    let leakedName = "";
+                    let leakedArgs: any = {};
+
                     // Intercept leaked JSON tool calls to convert them to actual text
                     try {
                       const trimmed = text.trim();
                       if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
                         const parsed = JSON.parse(trimmed);
                         if (parsed.type === "function" && parsed.name) {
+                          hasLeakedTool = true;
+                          leakedName = parsed.name;
+                          leakedArgs = parsed.parameters || {};
                           if (parsed.name === "createFlashcard") {
-                            text = `*(Auto-captured Flashcard)*\n\n**Q:** ${parsed.parameters?.question}\n\n**A:** ${parsed.parameters?.answer}`;
+                            text = `*(Auto-captured Flashcard)*\n\n**Q:** ${leakedArgs.question}\n\n**A:** ${leakedArgs.answer}`;
                           } else {
-                            text = `*(Auto-captured ${parsed.name})*\n\n\`\`\`json\n${JSON.stringify(parsed.parameters, null, 2)}\n\`\`\``;
+                            text = `*(Auto-captured ${parsed.name})*\n\n\`\`\`json\n${JSON.stringify(leakedArgs, null, 2)}\n\`\`\``;
                           }
                         }
                       }
@@ -1185,7 +1192,7 @@ function Chat() {
 
                     return (
                       <div key={i} className="flex justify-start">
-                        <div className="max-w-[85%] rounded-2xl rounded-bl-md bg-kumo-base text-kumo-default leading-relaxed">
+                        <div className="max-w-[85%] rounded-2xl rounded-bl-md bg-kumo-base text-kumo-default leading-relaxed group">
                           <Streamdown
                             className="sd-theme rounded-2xl rounded-bl-md p-3"
                             plugins={{ code }}
@@ -1194,6 +1201,24 @@ function Chat() {
                           >
                             {text}
                           </Streamdown>
+                          
+                          {/* Fallback execution button for leaked tools */}
+                          {hasLeakedTool && !isStreaming && (
+                            <div className="px-3 pb-3">
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  icon={<BrainIcon size={14} className="text-violet-500" />}
+                                  onClick={() => {
+                                      agent.stub.runLeakedTool(leakedName, leakedArgs).then(() => {
+                                         toasts.add({ title: "Success", description: "Tool successfully saved to database!", timeout: 3000 });
+                                      });
+                                  }}
+                                >
+                                  Execute Manually to Database
+                                </Button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
